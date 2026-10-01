@@ -31,14 +31,19 @@ from typing import Any
 import httpx
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric.ec import (
-    SECP256R1,
-    generate_private_key,
-)
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
 from domainscope_agent import config
 from domainscope_agent.state import Registration, State
+
+
+def _require_env(name: str) -> str:
+    val = os.environ.get(name, "").strip()
+    if not val:
+        print(f"error: environment variable {name} is required", file=sys.stderr)
+        sys.exit(2)
+    return val
 
 
 def _generate_csr(
@@ -46,8 +51,14 @@ def _generate_csr(
     san_dns: str,
     uri_san: str | None = None,
 ) -> tuple[str, str]:
-    """Generate an EC P-256 key and CSR. Returns (private_key_pem, csr_pem)."""
-    key = generate_private_key(SECP256R1())
+    """Generate an RSA 2048 key and CSR. Returns (private_key_pem, csr_pem).
+
+    GoDaddy's production PKI (the "zelos" private CA fronted by Parking
+    Cert API) rejects EC keys: HTTP 422, "CSR public key must use RSA,
+    but was 'EC'. PKI only accepts RSA 2048 or 4096 bit keys." The local
+    dev RA doesn't enforce this, but RSA works there too.
+    """
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
     san_names: list[x509.GeneralName] = [x509.DNSName(san_dns)]
     if uri_san:
@@ -132,8 +143,10 @@ def register(cfg: config.AgentConfig | None = None) -> Registration:
     """Register the agent with the configured RA and persist the result.
 
     The flow is the standard ANS-1 lifecycle:
-      1. Generate server CSR + identity CSR locally (keys never leave the host).
-      2. POST /v1/agents/register with both CSRs, FQDN as the anchor.
+      1. Generate the identity CSR locally (key never leaves the host) and
+         read the live server certificate + chain (BYOC) off disk.
+      2. POST /v1/agents/register with the identity CSR + server cert, FQDN
+         as the anchor.
       3. Print the ACME DNS-01 challenge record (operator adds it; the local
          dev DNS server adds it automatically).
       4. Wait for DNS propagation, trigger verify-acme.
@@ -165,37 +178,42 @@ def register(cfg: config.AgentConfig | None = None) -> Registration:
 
     print(f"Registering {cfg.agent_host} v{cfg.version} with RA {cfg.ra_base_url}")
 
-    server_key_pem, server_csr_pem = _generate_csr(cfg.agent_host, cfg.agent_host)
     identity_key_pem, identity_csr_pem = _generate_csr(
         cfg.agent_host,
         cfg.agent_host,
         uri_san=cfg.ans_name,
     )
 
-    # Persist the keys next to the state DB (developer-only convenience; in
-    # production these would come from a KMS or a sealed secret store).
-    # Refuse to overwrite existing keys: re-running register against an
-    # already-registered agent would clobber the keys backing its current
-    # ANS identity, breaking the agent silently. Set ANS_AGENT_FORCE_OVERWRITE_KEYS=1
-    # to opt in (when intentionally rotating).
+    # BYOC for the server cert: submitting a serverCsrPEM would make the
+    # prod RA issue its own GoDaddy DV cert and compute the server TLSA
+    # from that cert, not the one actually served at agent_url -- a
+    # permanent TLSA mismatch. Submit the real serving leaf + intermediate
+    # chain (not a fullchain.cer) instead. ANS_SERVER_CERT_PEM / _CHAIN_PEM
+    # point at whatever TLS terminator (Caddy, etc.) is serving agent_url.
+    server_cert_pem = Path(_require_env("ANS_SERVER_CERT_PEM")).read_text()
+    server_chain_pem = Path(_require_env("ANS_SERVER_CERT_CHAIN_PEM")).read_text()
+
+    # Persist the identity key next to the state DB (developer-only
+    # convenience; in production this would come from a KMS or a sealed
+    # secret store). Refuse to overwrite an existing key: re-running
+    # register against an already-registered agent would clobber the key
+    # backing its current ANS identity, breaking the agent silently. Set
+    # ANS_AGENT_FORCE_OVERWRITE_KEYS=1 to opt in (when intentionally
+    # rotating).
     keys_dir = cfg.state_db_path.parent
-    server_key_path = keys_dir / "agent-server.key"
     identity_key_path = keys_dir / "agent-identity.key"
     force_overwrite = os.environ.get("ANS_AGENT_FORCE_OVERWRITE_KEYS") == "1"
-    for path in (server_key_path, identity_key_path):
-        if path.exists() and not force_overwrite:
-            print(
-                f"Refusing to overwrite existing key at {path}. "
-                "Set ANS_AGENT_FORCE_OVERWRITE_KEYS=1 to rotate, or remove "
-                "the file manually after backing it up.",
-                file=sys.stderr,
-            )
-            sys.exit(2)
-    server_key_path.write_text(server_key_pem)
+    if identity_key_path.exists() and not force_overwrite:
+        print(
+            f"Refusing to overwrite existing key at {identity_key_path}. "
+            "Set ANS_AGENT_FORCE_OVERWRITE_KEYS=1 to rotate, or remove "
+            "the file manually after backing it up.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
     identity_key_path.write_text(identity_key_pem)
-    server_key_path.chmod(0o600)
     identity_key_path.chmod(0o600)
-    print(f"Private keys written to {keys_dir} (mode 0600)")
+    print(f"Private key written to {identity_key_path} (mode 0600)")
 
     payload: dict[str, Any] = {
         "agentHost": cfg.agent_host,
@@ -206,7 +224,8 @@ def register(cfg: config.AgentConfig | None = None) -> Registration:
             "RDAP. ANS-registered with Trust Card hosting and stapled "
             "SCITT receipt."
         ),
-        "serverCsrPEM": server_csr_pem,
+        "serverCertificatePEM": server_cert_pem,
+        "serverCertificateChainPEM": server_chain_pem,
         "identityCsrPEM": identity_csr_pem,
         "endpoints": [
             {
