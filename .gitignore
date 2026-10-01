@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# venv
+.venv/
+venv/
+env/
+
+# Build
+build/
+dist/
+*.egg
+
+# Local agent state
+*.sqlite3
+*.sqlite3-*
+
+# Local cryptographic material — NEVER commit
+*.key
+*.pem
+*.crt
+agent-server.*
+agent-identity.*
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# uv lock — regenerated locally; not part of the example contract
+uv.lock
