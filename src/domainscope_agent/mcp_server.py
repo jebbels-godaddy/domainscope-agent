@@ -33,7 +33,7 @@ def lookup_domain(domain: str) -> str:
 
 def main() -> None:
     """Entry point for `python -m domainscope_agent.mcp_server`."""
-    parser = argparse.ArgumentParser(description="ANS reference agent MCP server")
+    parser = argparse.ArgumentParser(description="DomainScope agent MCP server")
     parser.add_argument(
         "--transport",
         default="stdio",

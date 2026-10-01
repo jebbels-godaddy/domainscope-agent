@@ -37,3 +37,4 @@ agent-identity.*
 
 # uv lock — regenerated locally; not part of the example contract
 uv.lock
+.env

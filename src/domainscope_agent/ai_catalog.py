@@ -1,4 +1,4 @@
-"""AI Catalog builder for the ANS reference agent.
+"""AI Catalog builder for DomainScope.
 
 Implements the AI Catalog draft (Unofficial Draft, 14 May 2026) at Level 3
 (Trusted Catalog), the specification's highest conformance tier:

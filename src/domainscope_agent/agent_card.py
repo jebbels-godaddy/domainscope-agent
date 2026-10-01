@@ -1,4 +1,4 @@
-"""A2A v0.3 AgentCard builder for the ANS reference agent.
+"""A2A v0.3 AgentCard builder for DomainScope.
 
 Produces a complete A2A v0.3 AgentCard JSON dict. Field selection mirrors the
 protobuf definition in `a2a.types.a2a_pb2.AgentCard`:

@@ -1,4 +1,4 @@
-"""ASGI app for the ANS reference agent.
+"""ASGI app for DomainScope.
 
 Wires the A2A JSON-RPC surface, the streamable-HTTP MCP mount, and the full
 set of well-known discovery paths into one Starlette application:
@@ -140,7 +140,7 @@ def _agent_description(cfg: config.AgentConfig) -> str:
 
 def _build_agent_card_body(cfg: config.AgentConfig) -> dict[str, Any]:
     return build_agent_card_dict(
-        agent_name="ANS Reference Agent",
+        agent_name="DomainScope",
         agent_description=_agent_description(cfg),
         agent_host=cfg.agent_host,
         agent_url=cfg.agent_url,
@@ -195,7 +195,7 @@ def _build_trust_card_body(cfg: config.AgentConfig, state: State) -> dict[str, A
             receipt_b64 = rec.cose_sign1_b64
     return build_trust_card(
         ans_name=cfg.ans_name,
-        agent_display_name="ANS Reference Agent",
+        agent_display_name="DomainScope",
         agent_host=cfg.agent_host,
         version=version,
         agent_url=cfg.agent_url,
@@ -226,7 +226,7 @@ def _build_ai_catalog_body(cfg: config.AgentConfig) -> dict[str, Any]:
     return build_ai_catalog(
         agent_host=cfg.agent_host,
         agent_url=cfg.agent_url,
-        agent_display_name="ANS Reference Agent",
+        agent_display_name="DomainScope",
         ans_name=cfg.ans_name,
         version=cfg.version,
         organization=cfg.organization,
@@ -241,7 +241,7 @@ def _make_app(cfg: config.AgentConfig, state: State) -> Starlette:
     """Construct the Starlette app for the given config."""
 
     a2a_card = build_a2a_protobuf_card(
-        agent_name="ANS Reference Agent",
+        agent_name="DomainScope",
         agent_description=_agent_description(cfg),
         agent_url=cfg.agent_url,
         version=cfg.version,

@@ -90,7 +90,7 @@ def load() -> AgentConfig:
     Optional vars (with sensible defaults):
       ANS_AGENT_URL          → derived from ANS_AGENT_HOST
       ANS_AGENT_NAME         → "domainscope-agent"
-      ANS_AGENT_ORG          → "ANS Reference"
+      ANS_AGENT_ORG          → "Jeremy Ebbels"
       ANS_AGENT_ORG_URL      → ANS_AGENT_URL
       ANS_AGENT_DOC_URL      → ANS_AGENT_URL
       ANS_AGENT_ICON_URL     → unset
@@ -143,7 +143,7 @@ def load() -> AgentConfig:
         agent_url=agent_url,
         ans_name=f"ans://v{version}.{agent_host}",
         version=version,
-        organization=_optional("ANS_AGENT_ORG", "ANS Reference"),
+        organization=_optional("ANS_AGENT_ORG", "Jeremy Ebbels"),
         organization_url=_optional("ANS_AGENT_ORG_URL", agent_url),
         documentation_url=_optional("ANS_AGENT_DOC_URL", agent_url),
         icon_url=_optional("ANS_AGENT_ICON_URL") or None,

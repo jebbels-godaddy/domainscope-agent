@@ -1,4 +1,4 @@
-# ANS Reference Agent
+# DomainScope Agent
 
 Reference implementation of an ANS-registered agent. Pairs with the
 reference Registration Authority and Transparency Log at
@@ -87,7 +87,7 @@ once at startup.
 | Variable | Default | Purpose |
 |---|---|---|
 | `ANS_AGENT_URL` | `https://$ANS_AGENT_HOST` | Public URL the agent advertises in cards. |
-| `ANS_AGENT_ORG` | `ANS Reference` | Organization name in cards and AI Catalog. |
+| `ANS_AGENT_ORG` | `Jeremy Ebbels` | Organization name in cards and AI Catalog. |
 | `ANS_AGENT_ORG_URL` | = `ANS_AGENT_URL` | Organization URL. |
 | `ANS_AGENT_DOC_URL` | = `ANS_AGENT_URL` | Documentation URL. |
 | `ANS_AGENT_ICON_URL` | unset | Icon URL for the agent card. |
