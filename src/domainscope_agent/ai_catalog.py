@@ -195,10 +195,9 @@ def build_ai_catalog(
                 "mediaType": A2A_CARD_MEDIA_TYPE,
                 "url": a2a_card_url,
                 "description": (
-                    "Reference echo skill over A2A v0.3 JSON-RPC. "
-                    "Demonstrates A2A round-trip against an ANS-registered agent."
+                    "Public RDAP domain lookup skill over A2A v0.3 JSON-RPC."
                 ),
-                "tags": ["a2a", "ans", "reference", "echo"],
+                "tags": ["a2a", "ans", "rdap", "domain"],
                 "publisher": publisher,
                 "trustManifest": a2a_trust_manifest,
                 "updatedAt": now_iso,
@@ -210,10 +209,9 @@ def build_ai_catalog(
                 "mediaType": MCP_SERVER_MEDIA_TYPE,
                 "url": mcp_discovery_url,
                 "description": (
-                    "Reference echo tool over streamable-HTTP MCP. "
-                    "Demonstrates MCP round-trip against an ANS-registered agent."
+                    "Public RDAP domain lookup tool over streamable-HTTP MCP."
                 ),
-                "tags": ["mcp", "ans", "reference", "echo"],
+                "tags": ["mcp", "ans", "rdap", "domain"],
                 "publisher": publisher,
                 "trustManifest": mcp_trust_manifest,
                 "updatedAt": now_iso,

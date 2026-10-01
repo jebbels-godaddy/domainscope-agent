@@ -1,13 +1,9 @@
-"""Minimal AgentExecutor implementing the echo skill.
+"""AgentExecutor implementing the domain-lookup skill.
 
-The reference agent ships one skill, `echo`, exposed through both A2A and MCP.
-A2A invocation flows through this executor; MCP invocation flows through the
-matching tool definition in mcp_server.py. Both surfaces return the input
-string with a small prefix so a caller can confirm the round trip.
-
-Production agents replace this executor with their own behavior; the rest of
-the reference (registration, Trust Card hosting, MCP tool surface, A2A routes)
-does not change.
+domainscope-agent ships one skill, `domain-lookup`, exposed through both A2A
+and MCP. A2A invocation flows through this executor; MCP invocation flows
+through the matching tool definition in mcp_server.py. Both surfaces look up
+a domain over public RDAP and return a human-readable summary.
 """
 from __future__ import annotations
 
@@ -22,6 +18,8 @@ from a2a.types.a2a_pb2 import (
     TaskStatus,
     TaskStatusUpdateEvent,
 )
+
+from domainscope_agent.rdap_client import RdapLookupError, lookup_domain
 
 
 def _make_task(task_id: str, context_id: str) -> Task:
@@ -46,14 +44,47 @@ def _make_artifact(task_id: str, context_id: str, text: str) -> TaskArtifactUpda
         context_id=context_id,
         artifact=Artifact(
             artifact_id="result",
-            name="echo-result",
+            name="domain-lookup-result",
             parts=[Part(text=text)],
         ),
     )
 
 
-class EchoExecutor(AgentExecutor):
-    """Returns `echo: <input>` for every A2A request."""
+def format_lookup_result(result: dict) -> str:
+    """Render an rdap_client.lookup_domain() result as human-readable text."""
+    domain = result["domain"]
+    if not result.get("registered"):
+        return f"{domain} is not registered."
+
+    lines = [f"{domain} is registered."]
+    status = result.get("status") or []
+    if status:
+        lines.append(f"Status: {', '.join(status)}")
+    nameservers = result.get("nameservers") or []
+    if nameservers:
+        lines.append(f"Nameservers: {', '.join(nameservers)}")
+    if result.get("registered_date"):
+        lines.append(f"Registered: {result['registered_date']}")
+    if result.get("expiration_date"):
+        lines.append(f"Expires: {result['expiration_date']}")
+    lines.append(f"DNSSEC: {'signed' if result.get('dnssec_signed') else 'not signed'}")
+    return "\n".join(lines)
+
+
+def run_domain_lookup(user_text: str) -> str:
+    """Look up the domain named in user_text and return a formatted reply."""
+    domain = user_text.strip()
+    if not domain:
+        return "Please provide a domain name to look up."
+    try:
+        result = lookup_domain(domain)
+    except RdapLookupError as exc:
+        return f"Lookup failed for {domain}: {exc}"
+    return format_lookup_result(result)
+
+
+class DomainLookupExecutor(AgentExecutor):
+    """Looks up a domain over public RDAP for every A2A request."""
 
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         task_id = context.task_id or "unknown"
@@ -69,7 +100,7 @@ class EchoExecutor(AgentExecutor):
         )
 
         user_text = context.get_user_input() or ""
-        reply = f"echo: {user_text}" if user_text else "echo: (empty input)"
+        reply = run_domain_lookup(user_text)
 
         await event_queue.enqueue_event(_make_artifact(task_id, context_id, reply))
         await event_queue.enqueue_event(

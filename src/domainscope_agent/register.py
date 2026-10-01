@@ -202,8 +202,9 @@ def register(cfg: config.AgentConfig | None = None) -> Registration:
         "version": cfg.version,
         "agentDisplayName": cfg.organization,
         "agentDescription": (
-            "ANS reference agent. Demonstrates registration, Trust Card "
-            "hosting with stapled SCITT receipt, A2A and MCP serving."
+            "DomainScope: looks up public domain registration data over "
+            "RDAP. ANS-registered with Trust Card hosting and stapled "
+            "SCITT receipt."
         ),
         "serverCsrPEM": server_csr_pem,
         "identityCsrPEM": identity_csr_pem,
@@ -214,7 +215,7 @@ def register(cfg: config.AgentConfig | None = None) -> Registration:
                 "metaDataUrl": f"{cfg.agent_url}/.well-known/agent-card.json",
                 "transports": ["STREAMABLE-HTTP"],
                 "functions": [
-                    {"id": "echo", "name": "Echo", "tags": ["reference", "echo", "demo"]},
+                    {"id": "domain-lookup", "name": "Domain Lookup", "tags": ["rdap", "domain", "dns"]},
                 ],
             },
             {
@@ -223,7 +224,7 @@ def register(cfg: config.AgentConfig | None = None) -> Registration:
                 "metaDataUrl": f"{cfg.agent_url}/.well-known/mcp.json",
                 "transports": ["STREAMABLE-HTTP"],
                 "functions": [
-                    {"id": "echo", "name": "Echo Tool", "tags": ["reference", "echo", "demo"]},
+                    {"id": "lookup_domain", "name": "Lookup Domain Tool", "tags": ["rdap", "domain", "dns"]},
                 ],
             },
         ],

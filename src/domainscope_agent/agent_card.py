@@ -101,18 +101,16 @@ def build_agent_card_dict(
 
     skills = [
         {
-            "id": "echo",
-            "name": "Echo",
+            "id": "domain-lookup",
+            "name": "Domain Lookup",
             "description": (
-                "Returns the input string unchanged. The reference skill exists "
-                "to demonstrate end-to-end ANS registration, A2A request "
-                "handling, and MCP tool invocation against a registered agent. "
-                "Production agents replace this with their actual skill set."
+                "Looks up a domain's registration status over public RDAP: "
+                "registration state, nameservers, key dates, and DNSSEC status."
             ),
-            "tags": ["reference", "echo", "demo"],
+            "tags": ["rdap", "domain", "dns"],
             "examples": [
-                "Echo: hello world",
-                "Echo back the registration ID 550e8400-e29b-41d4-a716-446655440000",
+                "example.com",
+                "Is godaddy.com registered?",
             ],
             "inputModes": ["text/plain", "application/json"],
             "outputModes": ["text/plain", "application/json"],

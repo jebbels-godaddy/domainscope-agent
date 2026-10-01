@@ -1,8 +1,6 @@
-"""MCP server for the ANS reference agent.
+"""MCP server for domainscope-agent.
 
-Exposes one tool, `echo`, mirroring the A2A skill of the same name. Production
-agents replace this tool surface with their own; the rest of the agent
-(registration, Trust Card hosting, A2A surface) is unchanged.
+Exposes one tool, `lookup_domain`, mirroring the A2A domain-lookup skill.
 
 Run modes:
   stdio (default, for direct MCP-client testing):
@@ -17,24 +15,20 @@ import argparse
 
 from mcp.server.fastmcp import FastMCP
 
+from domainscope_agent.domain_lookup_executor import run_domain_lookup
 
-mcp = FastMCP("ANS Reference Agent")
+
+mcp = FastMCP("DomainScope Agent")
 
 
 @mcp.tool()
-def echo(message: str) -> str:
-    """Return the input string unchanged with a small prefix.
-
-    The reference tool exists to demonstrate end-to-end ANS registration,
-    A2A request handling, and MCP tool invocation against a registered
-    agent. Production agents replace this with their actual tool set.
+def lookup_domain(domain: str) -> str:
+    """Look up a domain's registration status over public RDAP.
 
     Args:
-        message: Any text. Returned with a `echo: ` prefix.
+        domain: A fully-qualified domain name, e.g. "example.com".
     """
-    if not message:
-        return "echo: (empty input)"
-    return f"echo: {message}"
+    return run_domain_lookup(domain)
 
 
 def main() -> None:

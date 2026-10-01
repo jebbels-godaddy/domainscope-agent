@@ -104,7 +104,7 @@ from domainscope_agent.agent_card import (
 )
 from domainscope_agent.ai_catalog import build_ai_catalog
 from domainscope_agent.directory_signer import sign_directory_response
-from domainscope_agent.echo_executor import EchoExecutor
+from domainscope_agent.domain_lookup_executor import DomainLookupExecutor
 from domainscope_agent.public_mcp_server import session_manager_lifespan, streamable_http_app
 from domainscope_agent.state import Receipt, State
 from domainscope_agent.trust_card import build_trust_card, fetch_scitt_receipt
@@ -117,15 +117,14 @@ def _agent_skills(_cfg: config.AgentConfig) -> list[dict[str, Any]]:
     """Skills published in the A2A protobuf card. Mirrors agent_card.py's dict."""
     return [
         {
-            "id": "echo",
-            "name": "Echo",
+            "id": "domain-lookup",
+            "name": "Domain Lookup",
             "description": (
-                "Returns the input string unchanged. The reference skill "
-                "demonstrates end-to-end ANS registration, A2A request "
-                "handling, and MCP tool invocation against a registered agent."
+                "Looks up a domain's registration status over public RDAP: "
+                "registration state, nameservers, key dates, and DNSSEC status."
             ),
-            "tags": ["reference", "echo", "demo"],
-            "examples": ["Echo: hello world"],
+            "tags": ["rdap", "domain", "dns"],
+            "examples": ["example.com"],
             "inputModes": ["text/plain", "application/json"],
             "outputModes": ["text/plain", "application/json"],
         },
@@ -134,8 +133,8 @@ def _agent_skills(_cfg: config.AgentConfig) -> list[dict[str, Any]]:
 
 def _agent_description(cfg: config.AgentConfig) -> str:
     return (
-        "ANS reference agent. Demonstrates registration, Trust Card hosting "
-        "with stapled SCITT receipt, A2A and MCP serving."
+        "DomainScope: looks up public domain registration data over RDAP. "
+        "ANS-registered with Trust Card hosting and stapled SCITT receipt."
     )
 
 
@@ -216,7 +215,7 @@ def _build_mcp_discovery(cfg: config.AgentConfig) -> dict[str, Any]:
         "transport": "streamable-http",
         "authentication": {
             "schemes": ["none"],
-            "notes": "Reference echo tool. No authentication.",
+            "notes": "Public RDAP domain lookup tool. No authentication.",
         },
         "agentCardUrl": f"{cfg.agent_url}/.well-known/agent-card.json",
         "trustCardUrl": f"{cfg.agent_url}/.well-known/ans/trust-card.json",
@@ -252,7 +251,7 @@ def _make_app(cfg: config.AgentConfig, state: State) -> Starlette:
         skills=_agent_skills(cfg),
     )
     handler = DefaultRequestHandlerV2(
-        agent_executor=EchoExecutor(),
+        agent_executor=DomainLookupExecutor(),
         task_store=InMemoryTaskStore(),
         agent_card=a2a_card,
     )

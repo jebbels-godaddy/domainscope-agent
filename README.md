@@ -15,16 +15,14 @@ This agent demonstrates:
   validate the registration offline without contacting the live TL.
 - **Dual-protocol serving.** One Starlette app exposes A2A v0.3 JSON-RPC
   at `POST /` and a streamable-HTTP MCP server at `POST /mcp/`. Both
-  surfaces invoke the same `echo` skill/tool.
+  surfaces invoke the same domain-lookup skill/tool.
 - **Discovery surfaces.** `.well-known` paths for A2A AgentCard, ANS
   Trust Card, RFC 9421 HTTP Message Signatures directory, Web Bot Auth
   Signature Agent Card, MCP discovery document, and AI Catalog Level-3
   manifest with signed Trust Manifests.
 
-The agent is intentionally minimal: one echo skill, no LLM dependency,
-no Postgres, no encounter store. Production agents replace the echo
-executor with their actual behavior; the rest of the agent (registration,
-Trust Card hosting, discovery surfaces) does not change.
+The agent is intentionally minimal: one domain-lookup skill, no LLM
+dependency, no Postgres, no encounter store.
 
 ## Quick start: run locally against the reference RA
 
@@ -126,8 +124,8 @@ domainscope-agent-register
 
 | Path | Purpose |
 |---|---|
-| `POST /` | A2A JSON-RPC endpoint. Invokes the echo skill. |
-| `POST /mcp/` | Streamable-HTTP MCP endpoint. Invokes the echo tool. |
+| `POST /` | A2A JSON-RPC endpoint. Invokes the domain-lookup skill. |
+| `POST /mcp/` | Streamable-HTTP MCP endpoint. Invokes the lookup_domain tool. |
 | `GET /.well-known/agent-card.json` | A2A v0.3 AgentCard with detached-JWS signature. |
 | `GET /.well-known/agent.json` | A2A SDK alias for the same card. |
 | `GET /.well-known/ans/trust-card.json` | ANS Trust Card with stapled SCITT receipt. |

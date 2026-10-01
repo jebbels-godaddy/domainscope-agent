@@ -1,14 +1,10 @@
-"""Public MCP server for the ANS reference agent.
+"""Public MCP server for domainscope-agent.
 
-Exposes the same `echo` tool as `domainscope_agent.mcp_server` but over
-streamable-HTTP so it can mount under `/mcp` inside the main Starlette app.
-The stdio server in `mcp_server.py` is for direct command-line testing; this
-module is the surface that remote MCP clients reach over the agent's
+Exposes the same `lookup_domain` tool as `domainscope_agent.mcp_server` but
+over streamable-HTTP so it can mount under `/mcp` inside the main Starlette
+app. The stdio server in `mcp_server.py` is for direct command-line testing;
+this module is the surface that remote MCP clients reach over the agent's
 public HTTPS endpoint.
-
-Production agents replace the echo tool with their actual tool set, audit
-each tool's outbound surface for SSRF, and decide whether to keep the
-endpoint public-read or require authentication.
 """
 from __future__ import annotations
 
@@ -17,12 +13,14 @@ import os
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
+from domainscope_agent.domain_lookup_executor import run_domain_lookup
+
 
 _PUBLIC_HOST = os.environ.get("ANS_AGENT_HOST", "localhost")
 
 
 mcp = FastMCP(
-    "ANS Reference Agent",
+    "DomainScope Agent",
     streamable_http_path="/",
     stateless_http=True,
     json_response=True,
@@ -47,19 +45,13 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-def echo(message: str) -> str:
-    """Return the input string unchanged with a small prefix.
-
-    Demonstrates MCP tool invocation against an ANS-registered agent over
-    streamable-HTTP. Production agents replace this with their actual
-    tool set.
+def lookup_domain(domain: str) -> str:
+    """Look up a domain's registration status over public RDAP.
 
     Args:
-        message: Any text. Returned with a `echo: ` prefix.
+        domain: A fully-qualified domain name, e.g. "example.com".
     """
-    if not message:
-        return "echo: (empty input)"
-    return f"echo: {message}"
+    return run_domain_lookup(domain)
 
 
 def streamable_http_app():
